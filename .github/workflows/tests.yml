@@ -44,3 +44,6 @@ jobs:
 
       - name: Run empty input pipeline test
         run: python test_empty_pipeline.py
+
+      - name: Run whitespace input pipeline test
+        run: python test_whitespace_pipeline.py
