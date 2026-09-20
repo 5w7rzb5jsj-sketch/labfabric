@@ -55,6 +55,18 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Run lines per second benchmark
+        run: |
+          cd ingester
+          go test -bench=BenchmarkLinesPerSecond -benchmem -count=5 | tee lines-per-second.txt
+          {
+            echo "## Lines Per Second Benchmark"
+            echo
+            echo '```text'
+            cat lines-per-second.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Run buffered reader benchmark
         run: |
           cd ingester
