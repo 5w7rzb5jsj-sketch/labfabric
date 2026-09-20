@@ -6,11 +6,15 @@ SYSLOG_PATTERN = re.compile(
     r"(?P<host>\S+)\s+(?P<message>.*)$"
 )
 def parse_event(line):
-    try:
-        return json.loads(line)
-    except json.JSONDecodeError:
-        pass
-    match = SYSLOG_PATTERN.match(line)
+    stripped = line.strip()
+    if not stripped:
+        return None
+    if stripped[0] in "{[":
+        try:
+            return json.loads(stripped)
+        except json.JSONDecodeError:
+            return None
+    match = SYSLOG_PATTERN.match(stripped)
     if not match:
         return None
     priority = int(match.group("priority"))
@@ -30,8 +34,6 @@ def detect(event):
 def main():
     write = sys.stdout.write
     for line in sys.stdin:
-        if not line.strip():
-            continue
         event = parse_event(line)
         if event is None:
             continue
