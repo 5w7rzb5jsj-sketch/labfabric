@@ -1,3 +1,0 @@
-module labfabric/ingester
-
-go 1.22
