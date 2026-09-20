@@ -9,6 +9,12 @@ def main():
         check=True,
     )
 
+    print("Running fixture test...")
+    subprocess.run(
+        [sys.executable, "test_fixture.py"],
+        check=True,
+    )
+
     print("Running end-to-end pipeline test...")
     subprocess.run(
         [sys.executable, "test_pipeline.py"],
