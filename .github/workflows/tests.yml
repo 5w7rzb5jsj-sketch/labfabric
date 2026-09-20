@@ -154,7 +154,6 @@ jobs:
           echo "- Elapsed: ${elapsed_ns} ns"
           echo "- **Lines/sec: $lines_per_sec**"
           echo "- MB/sec: $mb_per_sec"
-          echo
 
           {
             echo "## Real Executable Throughput"
@@ -271,7 +270,6 @@ jobs:
           echo "- Elapsed: ${elapsed_ns} ns"
           echo "- **Lines/sec: $lines_per_sec**"
           echo "- MB/sec: $mb_per_sec"
-          echo
 
           {
             echo "## End-to-End Go → Python Throughput"
@@ -281,6 +279,89 @@ jobs:
             echo "Input bytes: $(stat -c%s "$input_file")"
             echo "Ingester output lines verified: $ingester_lines"
             echo "Detector anomaly lines verified: $detector_lines"
+            echo "Elapsed: ${elapsed_ns} ns"
+            echo "Lines/sec: $lines_per_sec"
+            echo "MB/sec: $mb_per_sec"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run Python detector-only throughput benchmark
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          lines=1000000
+          input_file="$(mktemp)"
+          output_file="$(mktemp)"
+
+          trap 'rm -f "$input_file" "$output_file"' EXIT
+
+          python - <<'PY' > "$input_file"
+          import json
+
+          lines = 1_000_000
+
+          with open("/dev/stdout", "w", encoding="utf-8") as out:
+              for i in range(lines):
+                  event = {
+                      "level": "INFO",
+                      "message": "event test data",
+                      "sequence": i,
+                  }
+                  out.write(json.dumps(event, separators=(",", ":")) + "\n")
+          PY
+
+          start_ns=$(date +%s%N)
+
+          python detector/detector.py < "$input_file" > "$output_file"
+
+          end_ns=$(date +%s%N)
+
+          elapsed_ns=$((end_ns - start_ns))
+
+          if [ "$elapsed_ns" -le 0 ]; then
+            echo "Detector benchmark failed: non-positive elapsed time"
+            exit 1
+          fi
+
+          input_lines=$(wc -l < "$input_file")
+          input_lines=$(echo "$input_lines" | tr -d ' ')
+
+          output_lines=$(wc -l < "$output_file")
+          output_lines=$(echo "$output_lines" | tr -d ' ')
+
+          if [ "$input_lines" -ne "$lines" ]; then
+            echo "Detector benchmark failed: input contained $input_lines lines, expected $lines"
+            exit 1
+          fi
+
+          if [ "$output_lines" -ne 0 ]; then
+            echo "Detector benchmark failed: INFO input produced $output_lines anomaly lines, expected 0"
+            exit 1
+          fi
+
+          lines_per_sec=$(awk -v lines="$lines" -v ns="$elapsed_ns" \
+            'BEGIN { printf "%.2f", lines / (ns / 1000000000) }')
+
+          mb_per_sec=$(awk -v bytes="$(stat -c%s "$input_file")" -v ns="$elapsed_ns" \
+            'BEGIN { printf "%.2f", bytes / (ns / 1000000000) / 1000000 }')
+
+          echo "## Python Detector-Only Throughput"
+          echo
+          echo "- Input lines: $input_lines"
+          echo "- Input bytes: $(stat -c%s "$input_file")"
+          echo "- Anomaly lines verified: $output_lines"
+          echo "- Elapsed: ${elapsed_ns} ns"
+          echo "- **Lines/sec: $lines_per_sec**"
+          echo "- MB/sec: $mb_per_sec"
+
+          {
+            echo "## Python Detector-Only Throughput"
+            echo
+            echo '```text'
+            echo "Input lines: $input_lines"
+            echo "Input bytes: $(stat -c%s "$input_file")"
+            echo "Anomaly lines verified: $output_lines"
             echo "Elapsed: ${elapsed_ns} ns"
             echo "Lines/sec: $lines_per_sec"
             echo "MB/sec: $mb_per_sec"
