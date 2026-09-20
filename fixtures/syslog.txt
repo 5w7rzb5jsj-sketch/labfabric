@@ -1,0 +1,3 @@
+<34>Sep 20 12:00:01 server1 sshd[1234]: Failed password for user
+<13>Sep 20 12:00:05 server1 systemd[1]: Started service
+<11>Sep 20 12:00:09 server1 kernel: Disk error detected
