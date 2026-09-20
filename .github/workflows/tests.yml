@@ -27,12 +27,13 @@ jobs:
           go-version: "1.22"
 
       - name: Run Go tests
-        working-directory: ingester
-        run: go test ./...
+        run: |
+          cd ingester
+          go test ./...
 
       - name: Run Go benchmark
-        working-directory: ingester
         run: |
+          cd ingester
           go test -bench=BenchmarkInputLineProcessing -benchmem -count=5 | tee benchmark.txt
           {
             echo "## Go Benchmark"
@@ -43,8 +44,8 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Run throughput benchmark
-        working-directory: ingester
         run: |
+          cd ingester
           go test -bench=BenchmarkThroughput -benchmem -count=5 | tee throughput.txt
           {
             echo "## Throughput Benchmark"
@@ -55,8 +56,8 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Run buffered reader benchmark
-        working-directory: ingester
         run: |
+          cd ingester
           go test -bench=BenchmarkBufferedReader -benchmem -count=5 | tee reader.txt
           {
             echo "## Buffered Reader Benchmark"
@@ -67,8 +68,8 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Run scanner-only benchmark
-        working-directory: ingester
         run: |
+          cd ingester
           go test -bench=BenchmarkScannerOnly -benchmem -count=5 | tee scanner.txt
           {
             echo "## Scanner Only Benchmark"
