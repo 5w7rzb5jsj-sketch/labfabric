@@ -1,0 +1,5 @@
+{"level":"INFO","message":"service started"}
+{"level":"INFO","message":"request completed"}
+{"level":"ERROR","message":"database connection failed"}
+{"level":"INFO","message":"retry scheduled"}
+{"level":"ERROR","message":"database connection failed again"}
