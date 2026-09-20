@@ -42,6 +42,18 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Run throughput benchmark
+        working-directory: ingester
+        run: |
+          go test -bench=BenchmarkThroughput -benchmem -count=5 | tee throughput.txt
+          {
+            echo "## Throughput Benchmark"
+            echo
+            echo '```text'
+            cat throughput.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Run Python tests
         run: python run_tests.py
 
