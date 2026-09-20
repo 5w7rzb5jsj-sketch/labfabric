@@ -42,7 +42,19 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Run throughput benchmark      
+      - name: Run throughput benchmark
+        working-directory: ingester
+        run: |
+          go test -bench=BenchmarkThroughput -benchmem -count=5 | tee throughput.txt
+          {
+            echo "## Throughput Benchmark"
+            echo
+            echo '```text'
+            cat throughput.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run buffered reader benchmark
         working-directory: ingester
         run: |
           go test -bench=BenchmarkBufferedReader -benchmem -count=5 | tee reader.txt
@@ -53,14 +65,16 @@ jobs:
             cat reader.txt
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run scanner-only benchmark
         working-directory: ingester
         run: |
-          go test -bench=BenchmarkThroughput -benchmem -count=5 | tee throughput.txt
+          go test -bench=BenchmarkScannerOnly -benchmem -count=5 | tee scanner.txt
           {
-            echo "## Throughput Benchmark"
+            echo "## Scanner Only Benchmark"
             echo
             echo '```text'
-            cat throughput.txt
+            cat scanner.txt
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
