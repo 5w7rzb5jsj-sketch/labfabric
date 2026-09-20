@@ -41,3 +41,6 @@ jobs:
 
       - name: Run malformed input pipeline test
         run: python test_malformed_pipeline.py
+
+      - name: Run empty input pipeline test
+        run: python test_empty_pipeline.py
