@@ -42,7 +42,7 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Run throughput benchmark      - name: Run buffered reader benchmark
+      - name: Run throughput benchmark      
         working-directory: ingester
         run: |
           go test -bench=BenchmarkBufferedReader -benchmem -count=5 | tee reader.txt
