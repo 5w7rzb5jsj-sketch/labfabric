@@ -30,6 +30,10 @@ jobs:
         working-directory: ingester
         run: go test ./...
 
+      - name: Run Go benchmark
+        working-directory: ingester
+        run: go test -bench=BenchmarkInputLineProcessing -benchmem -count=5
+
       - name: Run Python tests
         run: python run_tests.py
 
