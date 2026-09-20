@@ -20,7 +20,7 @@ func BenchmarkThroughput(b *testing.B) {
 		scanner := bufio.NewScanner(strings.NewReader(input))
 
 		for scanner.Scan() {
-			_, _ = io.Discard.Write([]byte(scanner.Bytes()))
+			_, _ = io.Discard.Write(scanner.Bytes())
 		}
 
 		if err := scanner.Err(); err != nil {
