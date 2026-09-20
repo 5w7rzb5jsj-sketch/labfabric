@@ -32,7 +32,15 @@ jobs:
 
       - name: Run Go benchmark
         working-directory: ingester
-        run: go test -bench=BenchmarkInputLineProcessing -benchmem -count=5
+        run: |
+          go test -bench=BenchmarkInputLineProcessing -benchmem -count=5 | tee benchmark.txt
+          {
+            echo "## Go Benchmark"
+            echo
+            echo '```text'
+            cat benchmark.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Run Python tests
         run: python run_tests.py
