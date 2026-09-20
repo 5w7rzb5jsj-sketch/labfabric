@@ -32,3 +32,6 @@ jobs:
 
       - name: Run Python tests
         run: python run_tests.py
+
+      - name: Run full Go to Python pipeline test
+        run: python test_full_pipeline.py
