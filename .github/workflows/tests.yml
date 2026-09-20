@@ -1,5 +1,4 @@
 name: Lab Fabric Tests
-
 on:
   push:
     branches:
@@ -7,30 +6,24 @@ on:
   pull_request:
     branches:
       - main
-
 jobs:
   test:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: "1.22"
-
       - name: Run Go tests
         run: |
           cd ingester
           go test ./...
-
       - name: Run Go benchmark
         run: |
           cd ingester
@@ -42,7 +35,6 @@ jobs:
             cat benchmark.txt
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-
       - name: Run throughput benchmark
         run: |
           cd ingester
@@ -54,7 +46,6 @@ jobs:
             cat throughput.txt
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-
       - name: Run lines per second benchmark
         run: |
           cd ingester
@@ -66,7 +57,6 @@ jobs:
             cat lines-per-second.txt
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-
       - name: Run buffered reader benchmark
         run: |
           cd ingester
@@ -78,7 +68,6 @@ jobs:
             cat reader.txt
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-
       - name: Run scanner-only benchmark
         run: |
           cd ingester
@@ -90,21 +79,75 @@ jobs:
             cat scanner.txt
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-
+      - name: Build ingester
+        run: |
+          cd ingester
+          go build -o labfabric-ingester .
+      - name: Run real executable throughput benchmark
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd ingester
+          lines=1000000
+          input_file="$(mktemp)"
+          output_file="$(mktemp)"
+          trap 'rm -f "$input_file" "$output_file"' EXIT
+          python - <<'PY' > "$input_file"
+          lines = 1_000_000
+          event = b"event test data\n"
+          with open("/dev/stdout", "wb") as out:
+              chunk = event * 10000
+              for _ in range(lines // 10000):
+                  out.write(chunk)
+          PY
+          start_ns=$(date +%s%N)
+          ./labfabric-ingester < "$input_file" > "$output_file"
+          end_ns=$(date +%s%N)
+          elapsed_ns=$((end_ns - start_ns))
+          if [ "$elapsed_ns" -le 0 ]; then
+            echo "Benchmark failed: non-positive elapsed time"
+            exit 1
+          fi
+          output_lines=$(wc -l < "$output_file")
+          output_lines=$(echo "$output_lines" | tr -d ' ')
+          if [ "$output_lines" -ne "$lines" ]; then
+            echo "Benchmark failed: output contained $output_lines lines, expected $lines"
+            exit 1
+          fi
+          lines_per_sec=$(awk -v lines="$lines" -v ns="$elapsed_ns" \
+            'BEGIN { printf "%.2f", lines / (ns / 1000000000) }')
+          mb_per_sec=$(awk -v bytes="$(stat -c%s "$input_file")" -v ns="$elapsed_ns" \
+            'BEGIN { printf "%.2f", bytes / (ns / 1000000000) / 1000000 }')
+          echo "## Real Executable Throughput"
+          echo
+          echo "- Input lines: $lines"
+          echo "- Input bytes: $(stat -c%s "$input_file")"
+          echo "- Output lines verified: $output_lines"
+          echo "- Elapsed: ${elapsed_ns} ns"
+          echo "- **Lines/sec: $lines_per_sec**"
+          echo "- MB/sec: $mb_per_sec"
+          echo
+          {
+            echo "## Real Executable Throughput"
+            echo
+            echo '```text'
+            echo "Input lines: $lines"
+            echo "Input bytes: $(stat -c%s "$input_file")"
+            echo "Output lines verified: $output_lines"
+            echo "Elapsed: ${elapsed_ns} ns"
+            echo "Lines/sec: $lines_per_sec"
+            echo "MB/sec: $mb_per_sec"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
       - name: Run Python tests
         run: python run_tests.py
-
       - name: Run full Go to Python JSON pipeline test
         run: python test_full_pipeline.py
-
       - name: Run full Go to Python syslog pipeline test
         run: python test_full_syslog_pipeline.py
-
       - name: Run malformed input pipeline test
         run: python test_malformed_pipeline.py
-
       - name: Run empty input pipeline test
         run: python test_empty_pipeline.py
-
       - name: Run whitespace input pipeline test
         run: python test_whitespace_pipeline.py
