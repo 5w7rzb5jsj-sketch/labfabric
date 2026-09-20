@@ -8,12 +8,26 @@ import (
 
 func main() {
 	scanner := bufio.NewScanner(os.Stdin)
+	writer := bufio.NewWriterSize(os.Stdout, 1<<20)
 
 	for scanner.Scan() {
-		fmt.Println(scanner.Text())
+		if _, err := writer.Write(scanner.Bytes()); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+
+		if err := writer.WriteByte('\n'); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
 	}
 
 	if err := scanner.Err(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	if err := writer.Flush(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
