@@ -7,6 +7,7 @@ SYSLOG_PATTERN = re.compile(
     r"(?P<host>\S+)\s+(?P<message>.*)$"
 )
 
+
 def parse_event(line):
     try:
         return json.loads(line)
@@ -27,6 +28,7 @@ def parse_event(line):
         "message": match.group("message"),
     }
 
+
 def detect(event):
     if event.get("level") == "ERROR":
         return True
@@ -36,13 +38,11 @@ def detect(event):
 
     return False
 
+
 def main():
     write = sys.stdout.write
 
     for line in sys.stdin:
-        if not line.strip():
-            continue
-
         event = parse_event(line)
 
         if event is None:
@@ -54,6 +54,7 @@ def main():
                 "event": event
             }))
             write("\n")
+
 
 if __name__ == "__main__":
     main()
