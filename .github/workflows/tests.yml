@@ -38,3 +38,6 @@ jobs:
 
       - name: Run full Go to Python syslog pipeline test
         run: python test_full_syslog_pipeline.py
+
+      - name: Run malformed input pipeline test
+        run: python test_malformed_pipeline.py
